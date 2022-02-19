@@ -13,15 +13,15 @@ if (fs.existsSync('./' + SESSION_FILE_PATH)) {
 async function startApp() {
     const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
-// create a blog post
-var bimeh = new bimehModel();
+    // create a blog post
+    var bimeh = new bimehModel();
 
-// create a comment
-bimeh.name = 'aaaaaa';
+    // create a comment
+    bimeh.name = 'aaaaaa';
 
-bimeh.save(function (err) {
-  if (!err) console.log('Success!');
-});
+    bimeh.save(function (err) {
+    if (!err) console.log('Success!');
+    });
 
     const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
     // You can use an existing session and avoid scanning a QR code by adding a "session" object to the client options.
