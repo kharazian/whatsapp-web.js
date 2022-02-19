@@ -4,6 +4,7 @@ const { Client, Location, List, Buttons } = require('../index');
 const config = require('./config')
 const initDB = require('./database') 
 const bimehModel = require('./models/bimeh')  
+const logger = require('./utils/logger')
 
 const SESSION_FILE_PATH = 'session.json';
 let sessionCfg;
@@ -269,13 +270,13 @@ async function startApp() {
     client.on('group_join', (notification) => {
         // User has joined or been added to the group.
         console.log('join', notification);
-        notification.reply('User joined.');
+        // notification.reply('User joined.');
     });
 
     client.on('group_leave', (notification) => {
         // User has left or been kicked from the group.
         console.log('leave', notification);
-        notification.reply('User left.');
+        // notification.reply('User left.');
     });
 
     client.on('group_update', (notification) => {
