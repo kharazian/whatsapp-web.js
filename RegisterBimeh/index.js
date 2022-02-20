@@ -5,6 +5,7 @@ const config = require('./config')
 const initDB = require('./database') 
 const bimehModel = require('./models/bimeh')  
 const logger = require('./utils/logger')
+const msgString = require('./utils/msgString')
 
 const SESSION_FILE_PATH = 'session.json';
 let sessionCfg;
@@ -66,7 +67,7 @@ async function startApp() {
 
         if (msg.body === '!start') {
             // Send a new message as a reply to the current one
-            msg.reply('لطفا کد ملی بازنشسته را وارد فرمایید.');
+            msg.reply(msgString.CustomerIdentityCodeEnter);
 
         } else if (msg.body === '!ping') {
             // Send a new message to the same chat
