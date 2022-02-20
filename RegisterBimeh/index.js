@@ -64,9 +64,9 @@ async function startApp() {
     client.on('message', async msg => {
         console.log('MESSAGE RECEIVED', msg);
 
-        if (msg.body === '!ping reply') {
+        if (msg.body === '!start') {
             // Send a new message as a reply to the current one
-            msg.reply('pong');
+            msg.reply('لطفا کد ملی بازنشسته را وارد فرمایید.');
 
         } else if (msg.body === '!ping') {
             // Send a new message to the same chat

@@ -69,3 +69,5 @@ typings/
 
 # Test sessions
 *session.json
+
+temp.csv
