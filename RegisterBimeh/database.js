@@ -7,7 +7,7 @@ module.exports = async function initDB(url, auth) {
     mongoose.connect(url, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      auth,
+      // auth,
     }, (err) => {
       if (err) reject(err);
       resolve(mongoose.connection);
