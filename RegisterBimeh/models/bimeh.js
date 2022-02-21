@@ -20,6 +20,7 @@ const bimehSchema = new mongoose.Schema ({
   hasBimeh: Boolean,
   phoneNumber: Number,
   AccountNumber: String,
+  finished: Boolean,
   cost: Number,
   totalCost: Number,
   relations  : [relationSchema]

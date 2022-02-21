@@ -49,6 +49,7 @@ async function startApp() {
                 AccountNumber: element[5],
                 cost: element[6] == "True" ? 120000 : 0,
                 totalCost: element[6] == "True" ? 120000 : 0,
+                finished: false,
                 relations  : []
             });
         }

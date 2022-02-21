@@ -1,17 +1,21 @@
 const mongoose = require('mongoose');
 
 const requestCommand = new mongoose.Schema({
-  phoneNumber: Number, 
-  meliCode: Number, 
-  requestState: Number, 
-  name: String, 
-  family: String,
-  relation: String,
-  hasBimeh: Boolean,
-  cost: Number
+  dateRequest: String,
+  author: String,
+  body: String,
+  from: String,
+  fromMe: Boolean,
+  to: String,
+  type: String,
+  title: String,
+  description: String,
+  selectedButtonId: String,
 });
 
 const requestSchema = new mongoose.Schema ({
+  dateRequest: String,
+  phoneNumber: Number, 
   meliCode: Number, 
   name: String, 
   family: String,
@@ -20,8 +24,10 @@ const requestSchema = new mongoose.Schema ({
   workplaceCode: Number,
   hasBimeh: Boolean,
   cost: Number,
+  finished: Boolean,
+  state: String,
   totalCost: Number,
-  relations  : [requestCommand]
+  commands  : [requestCommand]
 });
 const requestModel = mongoose.model('request', requestSchema);
 module.exports = requestModel;

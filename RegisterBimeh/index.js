@@ -4,37 +4,30 @@ const { Client, Location, List, Buttons } = require('../index');
 const config = require('./config')
 const initDB = require('./database') 
 const bimehModel = require('./models/bimeh')  
-const logger = require('./utils/logger')
+const requestModel = require('./models/request')  
+const enums = require('./models/enum')
+// const logger = require('./utils/logger')
 const msgString = require('./utils/msgString')
+const checkCodeMeli = require('./utils/checkMeliCode')
 
 const SESSION_FILE_PATH = 'session.json';
 let sessionCfg;
 if (fs.existsSync('./' + SESSION_FILE_PATH)) {
     sessionCfg = require('../' + SESSION_FILE_PATH);
 }
+const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
 async function startApp() {
     const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
     // create a blog post
-    var bimeh = new bimehModel();
+    // var requestBimeh = new requestModel();
 
-    // create a comment
-    bimeh.name = 'aaaaaa';
+    // // create a comment
+    // bimeh.name = 'aaaaaa';
 
-    bimeh.save(function (err) {
-    if (!err) console.log('Success!');
-    });
-
-    const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
-    // You can use an existing session and avoid scanning a QR code by adding a "session" object to the client options.
-    // This object must include WABrowserId, WASecretBundle, WAToken1 and WAToken2.
-
-    // You also could connect to an existing instance of a browser
-    // { 
-    //    puppeteer: {
-    //        browserWSEndpoint: `ws://localhost:3000`
-    //    }
-    // }
+    // bimeh.save(function (err) {
+    // if (!err) console.log('Success!');
+    // });
 
     client.initialize();
 
@@ -65,171 +58,176 @@ async function startApp() {
     client.on('message', async msg => {
         console.log('MESSAGE RECEIVED', msg);
 
-        if (msg.body === '!start') {
-            // Send a new message as a reply to the current one
-            msg.reply(msgString.CustomerIdentityCodeEnter);
-
-        } else if (msg.body === '!ping') {
-            // Send a new message to the same chat
-            client.sendMessage(msg.from, 'pong');
-
-        } else if (msg.body.startsWith('!sendto ')) {
-            // Direct send a new message to specific id
-            let number = msg.body.split(' ')[1];
-            let messageIndex = msg.body.indexOf(number) + number.length;
-            let message = msg.body.slice(messageIndex, msg.body.length);
-            number = number.includes('@c.us') ? number : `${number}@c.us`;
-            let chat = await msg.getChat();
-            chat.sendSeen();
-            client.sendMessage(number, message);
-
-        } else if (msg.body.startsWith('!subject ')) {
-            // Change the group subject
-            let chat = await msg.getChat();
-            if (chat.isGroup) {
-                let newSubject = msg.body.slice(9);
-                chat.setSubject(newSubject);
-            } else {
-                msg.reply('This command can only be used in a group!');
-            }
-        } else if (msg.body.startsWith('!echo ')) {
-            // Replies with the same message
-            msg.reply(msg.body.slice(6));
-        } else if (msg.body.startsWith('!desc ')) {
-            // Change the group description
-            let chat = await msg.getChat();
-            if (chat.isGroup) {
-                let newDescription = msg.body.slice(6);
-                chat.setDescription(newDescription);
-            } else {
-                msg.reply('This command can only be used in a group!');
-            }
-        } else if (msg.body === '!leave') {
-            // Leave the group
-            let chat = await msg.getChat();
-            if (chat.isGroup) {
-                chat.leave();
-            } else {
-                msg.reply('This command can only be used in a group!');
-            }
-        } else if (msg.body.startsWith('!join ')) {
-            const inviteCode = msg.body.split(' ')[1];
-            try {
-                await client.acceptInvite(inviteCode);
-                msg.reply('Joined the group!');
-            } catch (e) {
-                msg.reply('That invite code seems to be invalid.');
-            }
-        } else if (msg.body === '!groupinfo') {
-            let chat = await msg.getChat();
-            if (chat.isGroup) {
-                msg.reply(`
-                    *Group Details*
-                    Name: ${chat.name}
-                    Description: ${chat.description}
-                    Created At: ${chat.createdAt.toString()}
-                    Created By: ${chat.owner.user}
-                    Participant count: ${chat.participants.length}
-                `);
-            } else {
-                msg.reply('This command can only be used in a group!');
-            }
-        } else if (msg.body === '!chats') {
-            const chats = await client.getChats();
-            client.sendMessage(msg.from, `The bot has ${chats.length} chats open.`);
-        } else if (msg.body === '!info') {
-            let info = client.info;
-            client.sendMessage(msg.from, `
-                *Connection info*
-                User name: ${info.pushname}
-                My number: ${info.me.user}
-                Platform: ${info.platform}
-                WhatsApp version: ${info.phone.wa_version}
-            `);
-        } else if (msg.body === '!mediainfo' && msg.hasMedia) {
-            const attachmentData = await msg.downloadMedia();
-            msg.reply(`
-                *Media info*
-                MimeType: ${attachmentData.mimetype}
-                Filename: ${attachmentData.filename}
-                Data (length): ${attachmentData.data.length}
-            `);
-        } else if (msg.body === '!quoteinfo' && msg.hasQuotedMsg) {
-            const quotedMsg = await msg.getQuotedMessage();
-
-            quotedMsg.reply(`
-                ID: ${quotedMsg.id._serialized}
-                Type: ${quotedMsg.type}
-                Author: ${quotedMsg.author || quotedMsg.from}
-                Timestamp: ${quotedMsg.timestamp}
-                Has Media? ${quotedMsg.hasMedia}
-            `);
-        } else if (msg.body === '!resendmedia' && msg.hasQuotedMsg) {
-            const quotedMsg = await msg.getQuotedMessage();
-            if (quotedMsg.hasMedia) {
-                const attachmentData = await quotedMsg.downloadMedia();
-                client.sendMessage(msg.from, attachmentData, { caption: 'Here\'s your requested media.' });
-            }
-        } else if (msg.body === '!location') {
-            msg.reply(new Location(37.422, -122.084, 'Googleplex\nGoogle Headquarters'));
-        } else if (msg.location) {
-            msg.reply(msg.location);
-        } else if (msg.body.startsWith('!status ')) {
-            const newStatus = msg.body.split(' ')[1];
-            await client.setStatus(newStatus);
-            msg.reply(`Status was updated to *${newStatus}*`);
-        } else if (msg.body === '!mention') {
-            const contact = await msg.getContact();
-            const chat = await msg.getChat();
-            chat.sendMessage(`Hi @${contact.number}!`, {
-                mentions: [contact]
-            });
-        } else if (msg.body === '!delete') {
-            if (msg.hasQuotedMsg) {
-                const quotedMsg = await msg.getQuotedMessage();
-                if (quotedMsg.fromMe) {
-                    quotedMsg.delete(true);
-                } else {
-                    msg.reply('I can only delete my own messages');
-                }
-            }
-        } else if (msg.body === '!pin') {
-            const chat = await msg.getChat();
-            await chat.pin();
-        } else if (msg.body === '!archive') {
-            const chat = await msg.getChat();
-            await chat.archive();
-        } else if (msg.body === '!mute') {
-            const chat = await msg.getChat();
-            // mute the chat for 20 seconds
-            const unmuteDate = new Date();
-            unmuteDate.setSeconds(unmuteDate.getSeconds() + 20);
-            await chat.mute(unmuteDate);
-        } else if (msg.body === '!typing') {
-            const chat = await msg.getChat();
-            // simulates typing in the chat
-            chat.sendStateTyping();
-        } else if (msg.body === '!recording') {
-            const chat = await msg.getChat();
-            // simulates recording audio in the chat
-            chat.sendStateRecording();
-        } else if (msg.body === '!clearstate') {
-            const chat = await msg.getChat();
-            // stops typing or recording in the chat
-            chat.clearState();
-        } else if (msg.body === '!jumpto') {
-            if (msg.hasQuotedMsg) {
-                const quotedMsg = await msg.getQuotedMessage();
-                client.interface.openChatWindowAt(quotedMsg.id._serialized);
-            }
-        } else if (msg.body === '!buttons') {
-            let button = new Buttons('Button body',[{body:'bt1'},{body:'bt2'},{body:'bt3'}],'title','footer');
-            client.sendMessage(msg.from, button);
-        } else if (msg.body === '!list') {
-            let sections = [{title:'sectionTitle',rows:[{title:'ListItem1', description: 'desc'},{title:'ListItem2'}]}];
-            let list = new List('List body','btnText',sections,'Title','footer');
-            client.sendMessage(msg.from, list);
+        if (msg.body[0] === '*')
+        {
+            dispatchMsg(msg);
         }
+
+        // if (msg.body === '!start') {
+        //     // Send a new message as a reply to the current one
+        //     msg.reply(msgString.CustomerIdentityCodeEnter);
+
+        // } else if (msg.body === '!ping') {
+        //     // Send a new message to the same chat
+        //     client.sendMessage(msg.from, 'pong');
+
+        // } else if (msg.body.startsWith('!sendto ')) {
+        //     // Direct send a new message to specific id
+        //     let number = msg.body.split(' ')[1];
+        //     let messageIndex = msg.body.indexOf(number) + number.length;
+        //     let message = msg.body.slice(messageIndex, msg.body.length);
+        //     number = number.includes('@c.us') ? number : `${number}@c.us`;
+        //     let chat = await msg.getChat();
+        //     chat.sendSeen();
+        //     client.sendMessage(number, message);
+
+        // } else if (msg.body.startsWith('!subject ')) {
+        //     // Change the group subject
+        //     let chat = await msg.getChat();
+        //     if (chat.isGroup) {
+        //         let newSubject = msg.body.slice(9);
+        //         chat.setSubject(newSubject);
+        //     } else {
+        //         msg.reply('This command can only be used in a group!');
+        //     }
+        // } else if (msg.body.startsWith('!echo ')) {
+        //     // Replies with the same message
+        //     msg.reply(msg.body.slice(6));
+        // } else if (msg.body.startsWith('!desc ')) {
+        //     // Change the group description
+        //     let chat = await msg.getChat();
+        //     if (chat.isGroup) {
+        //         let newDescription = msg.body.slice(6);
+        //         chat.setDescription(newDescription);
+        //     } else {
+        //         msg.reply('This command can only be used in a group!');
+        //     }
+        // } else if (msg.body === '!leave') {
+        //     // Leave the group
+        //     let chat = await msg.getChat();
+        //     if (chat.isGroup) {
+        //         chat.leave();
+        //     } else {
+        //         msg.reply('This command can only be used in a group!');
+        //     }
+        // } else if (msg.body.startsWith('!join ')) {
+        //     const inviteCode = msg.body.split(' ')[1];
+        //     try {
+        //         await client.acceptInvite(inviteCode);
+        //         msg.reply('Joined the group!');
+        //     } catch (e) {
+        //         msg.reply('That invite code seems to be invalid.');
+        //     }
+        // } else if (msg.body === '!groupinfo') {
+        //     let chat = await msg.getChat();
+        //     if (chat.isGroup) {
+        //         msg.reply(`
+        //             *Group Details*
+        //             Name: ${chat.name}
+        //             Description: ${chat.description}
+        //             Created At: ${chat.createdAt.toString()}
+        //             Created By: ${chat.owner.user}
+        //             Participant count: ${chat.participants.length}
+        //         `);
+        //     } else {
+        //         msg.reply('This command can only be used in a group!');
+        //     }
+        // } else if (msg.body === '!chats') {
+        //     const chats = await client.getChats();
+        //     client.sendMessage(msg.from, `The bot has ${chats.length} chats open.`);
+        // } else if (msg.body === '!info') {
+        //     let info = client.info;
+        //     client.sendMessage(msg.from, `
+        //         *Connection info*
+        //         User name: ${info.pushname}
+        //         My number: ${info.me.user}
+        //         Platform: ${info.platform}
+        //         WhatsApp version: ${info.phone.wa_version}
+        //     `);
+        // } else if (msg.body === '!mediainfo' && msg.hasMedia) {
+        //     const attachmentData = await msg.downloadMedia();
+        //     msg.reply(`
+        //         *Media info*
+        //         MimeType: ${attachmentData.mimetype}
+        //         Filename: ${attachmentData.filename}
+        //         Data (length): ${attachmentData.data.length}
+        //     `);
+        // } else if (msg.body === '!quoteinfo' && msg.hasQuotedMsg) {
+        //     const quotedMsg = await msg.getQuotedMessage();
+
+        //     quotedMsg.reply(`
+        //         ID: ${quotedMsg.id._serialized}
+        //         Type: ${quotedMsg.type}
+        //         Author: ${quotedMsg.author || quotedMsg.from}
+        //         Timestamp: ${quotedMsg.timestamp}
+        //         Has Media? ${quotedMsg.hasMedia}
+        //     `);
+        // } else if (msg.body === '!resendmedia' && msg.hasQuotedMsg) {
+        //     const quotedMsg = await msg.getQuotedMessage();
+        //     if (quotedMsg.hasMedia) {
+        //         const attachmentData = await quotedMsg.downloadMedia();
+        //         client.sendMessage(msg.from, attachmentData, { caption: 'Here\'s your requested media.' });
+        //     }
+        // } else if (msg.body === '!location') {
+        //     msg.reply(new Location(37.422, -122.084, 'Googleplex\nGoogle Headquarters'));
+        // } else if (msg.location) {
+        //     msg.reply(msg.location);
+        // } else if (msg.body.startsWith('!status ')) {
+        //     const newStatus = msg.body.split(' ')[1];
+        //     await client.setStatus(newStatus);
+        //     msg.reply(`Status was updated to *${newStatus}*`);
+        // } else if (msg.body === '!mention') {
+        //     const contact = await msg.getContact();
+        //     const chat = await msg.getChat();
+        //     chat.sendMessage(`Hi @${contact.number}!`, {
+        //         mentions: [contact]
+        //     });
+        // } else if (msg.body === '!delete') {
+        //     if (msg.hasQuotedMsg) {
+        //         const quotedMsg = await msg.getQuotedMessage();
+        //         if (quotedMsg.fromMe) {
+        //             quotedMsg.delete(true);
+        //         } else {
+        //             msg.reply('I can only delete my own messages');
+        //         }
+        //     }
+        // } else if (msg.body === '!pin') {
+        //     const chat = await msg.getChat();
+        //     await chat.pin();
+        // } else if (msg.body === '!archive') {
+        //     const chat = await msg.getChat();
+        //     await chat.archive();
+        // } else if (msg.body === '!mute') {
+        //     const chat = await msg.getChat();
+        //     // mute the chat for 20 seconds
+        //     const unmuteDate = new Date();
+        //     unmuteDate.setSeconds(unmuteDate.getSeconds() + 20);
+        //     await chat.mute(unmuteDate);
+        // } else if (msg.body === '!typing') {
+        //     const chat = await msg.getChat();
+        //     // simulates typing in the chat
+        //     chat.sendStateTyping();
+        // } else if (msg.body === '!recording') {
+        //     const chat = await msg.getChat();
+        //     // simulates recording audio in the chat
+        //     chat.sendStateRecording();
+        // } else if (msg.body === '!clearstate') {
+        //     const chat = await msg.getChat();
+        //     // stops typing or recording in the chat
+        //     chat.clearState();
+        // } else if (msg.body === '!jumpto') {
+        //     if (msg.hasQuotedMsg) {
+        //         const quotedMsg = await msg.getQuotedMessage();
+        //         client.interface.openChatWindowAt(quotedMsg.id._serialized);
+        //     }
+        // } else if (msg.body === '!buttons') {
+        //     let button = new Buttons('Button body',[{body:'bt1'},{body:'bt2'},{body:'bt3'}],'title','footer');
+        //     client.sendMessage(msg.from, button);
+        // } else if (msg.body === '!list') {
+        //     let sections = [{title:'sectionTitle',rows:[{title:'ListItem1', description: 'desc'},{title:'ListItem2'}]}];
+        //     let list = new List('List body','btnText',sections,'Title','footer');
+        //     client.sendMessage(msg.from, list);
+        // }
     });
 
     client.on('message_create', (msg) => {
@@ -300,12 +298,178 @@ async function startApp() {
     });
 
 
+    // dispatchMsg({ack:0,
+    //     author:undefined,
+    //     body:'40076520',
+    //     deviceType:'android',
+    //     forwardingScore:0,
+    //     from:'989132109337@c.us',
+    //     fromMe:false,
+    //     hasMedia:false,
+    //     isForwarded:false,
+    //     isStatus:false,
+    //     timestamp:1645419692,
+    //     to:'989132672983@c.us',
+    //     type:'chat'});
+}
 
+async function dispatchMsg(msg){
+    msg.body = msg.body.replace('*','');
+    var requestBimeh = await requestModel.findOne({phoneNumber: msg.from.replace('@c.us',''), finished: false})
+    if(!requestBimeh){
+        requestBimeh = new requestModel({
+            dateRequest: Date().toString(),
+            phoneNumber: msg.from.replace('@c.us',''),
+            meliCode : 0,
+            finished : false,
+            state: enums.state.Initial,
+            commands  : []
+        });
+        await requestBimeh.save();
+    }
+    requestBimeh.commands.push({
+        dateRequest: Date().toString(),
+        author: msg.author,
+        body: msg.body,
+        from: msg.from,
+        fromMe: msg.fromMe,
+        to: msg.to,
+        type: msg.type,
+        title: msg.title,
+        description: msg.description,
+        selectedButtonId: msg.selectedButtonId
+    });
+    await requestBimeh.save();
+    var bimeh;
+    if(requestBimeh.meliCode == 0) {
+        if(!checkCodeMeli(msg.body)){
+            // Send a new message as a reply to the current one
+            msg.reply(msgString.CustomerIdentityCodeEnter);
+            return false;
+        }
+        bimeh = await bimehModel.findOne({ meliCode: msg.body});
+        if(!bimeh){
+            msg.reply(msgString.CustomerIdentityCodeNotFound.format( msg.body));
+            return false;            
+        }
+        else if(bimeh.finished) {
+            msg.reply(msgString.CustomerIdentityCodeNotFound.format(bimeh.meliCode,bimeh.name, bimeh.family));
+            return false;            
+        }
+        else {
+            requestBimeh.meliCode = Number(msg.body);
+            requestBimeh.state = enums.state.ShowInvoice;
+            requestBimeh.save(function (err) {
+                if (!err) console.log('Success!');
+            });
+            ShowMenu(msg, bimeh);
+        }
+    }
+    else {        
+        bimeh = await bimehModel.findOne({ meliCode: requestBimeh.meliCode});
+        switch(requestBimeh.state) {
+            // ------------------------------------------------------------------------------------------------
+            case enums.state.ShowInvoice:
+                if(msg.selectedButtonId == 'CustomerShowInvoiceBtnEnableAll') {
+                    bimeh.hasBimeh = true;
+                    bimeh.cost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
+                    bimeh.totalCost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
+                }
+                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnDisableAll') {                    
+                    bimeh.hasBimeh = false;
+                    bimeh.cost = 0;
+                    bimeh.totalCost = 0;
+                    bimeh.relations.forEach(element => {
+                        element.hasBimeh = false;
+                        element.cost = 0;
+                    });
+                }
+                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnAddNewRelation') {  
+                    
+                }
+                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnEnableRealtion') {
+                    requestBimeh.state = enums.state.RelEnable;
+                    await requestBimeh.save();  
+                    msg.reply(msgString.CustomerIdentityCodeEnterRelationEnable.format( bimeh.name, bimeh.family));
+                }
+                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnDisableRelation') { 
+                    requestBimeh.state = enums.state.RelDisable;
+                    await requestBimeh.save();
+                    msg.reply(msgString.CustomerIdentityCodeEnterRelationDisable.format( bimeh.name, bimeh.family));
+                }
+
+                ShowMenu(msg, bimeh);
+              break;
+
+            // ------------------------------------------------------------------------------------------------
+            case enums.state.RelEnable:
+                relEdit(msg, bimeh, requestBimeh, true);
+              break;
+
+            // ------------------------------------------------------------------------------------------------
+            case enums.state.RelDisable:
+                relEdit(msg, bimeh, requestBimeh, false);
+
+              // code block
+              break;
+
+            // ------------------------------------------------------------------------------------------------
+            default:
+                console.log('Not Supported');
+          }
+    }
+
+}
+const relEdit = async function(msg, bimeh, requestBimeh, hasBimeh){
+    if(!checkCodeMeli(msg.body)){
+        // Send a new message as a reply to the current one
+        msg.reply(msgString.CustomerIdentityCodeEnter);
+        return false;
+    }
+    var relBimeh = await bimeh.findOne({ meliCode: msg.body});
+    if(!relBimeh){
+        msg.reply(msgString.CustomerIdentityCodeNotFound.format( msg.body));
+    }
+    else {
+        relBimeh.hasBimeh = hasBimeh
+        relBimeh.cost = hasBimeh ? 14400000 : 0;
+        bimeh.totalCost = bimeh.relations.reduce( (pValue, cValue) => {
+            return pValue.cost + cValue.cost;
+        })
+        await bimeh.save();
+        requestBimeh.state = enums.state.ShowInvoice;
+        await requestBimeh.save();
+        msg.reply(msgString.CustomerRelationEdited.format(relBimeh.relation,relBimeh.fullName, relBimeh.meliCode, msgString.EnableOrDisbale(relBimeh.hasBimeh)));
+        ShowMenu(msg, bimeh);
+    }
+}
+const ShowMenu = function(msg, bimeh) {
+    let btns = [];
+    if(bimeh.hasBimeh) {
+        btns.push({id: 'CustomerShowInvoiceBtnDisableAll', body: msgString.CustomerShowInvoiceBtnDisableAll});
+        btns.push({id: 'CustomerShowInvoiceBtnAddNewRelation', body: msgString.CustomerShowInvoiceBtnAddNewRelation});
+        btns.push({id: 'CustomerShowInvoiceBtnEnableRealtion', body: msgString.CustomerShowInvoiceBtnEnableRealtion});
+        btns.push({id: 'CustomerShowInvoiceBtnDisableRelation', body: msgString.CustomerShowInvoiceBtnDisableRelation});
+    }
+    else {        
+        btns.push({id: 'CustomerShowInvoiceBtnEnableAll', body: msgString.CustomerShowInvoiceBtnEnableAll});
+    }
+    let button = new Buttons(
+        bimeh.relations.reduce(( pValue, cValue) => {
+            return msgString.CustomerShowInvoiceBody.format(pValue.relation, pValue.meliCode, pValue.fullName, msgString.EnableOrDisbale(pValue.hasBimeh), pValue.cost) + 
+            msgString.CustomerShowInvoiceBody.format(cValue.relation, cValue.meliCode, cValue.fullName, msgString.EnableOrDisbale(cValue.hasBimeh), cValue.cost);
+        }),
+        btns,
+        msgString.CustomerShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost),
+        msgString.CustomerShowInvoiceFooter.format(bimeh.totalCost));
+    client.sendMessage(msg.from, button);
 }
 
 startApp()
 .catch((e) => {
-  logger.error("Server failed with error:");
-  logger.error(e);
+//   logger.error("Server failed with error:");
+//   logger.error(e);
+  console.log("Server failed with error:");
+  console.log(e);
   process.exitCode = 1;
 });
