@@ -17,6 +17,7 @@ const requestSchema = new mongoose.Schema ({
   dateRequest: String,
   phoneNumber: Number, 
   meliCode: Number, 
+  relMeliCode: Number, 
   name: String, 
   family: String,
   retCode: Number, 

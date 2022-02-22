@@ -3,7 +3,10 @@ const checkCodeMeli = function myfunction(codeMeli) {
         return false;
     } else if (codeMeli == "") {
         return false;
-    } else if (codeMeli.length < 10) {
+    } else if (codeMeli.length > 10)  {
+        return false;
+    }
+    else {
         codeMeli = codeMeli.padStart(10, "0");
         var yy = 0;
         var yv = 0;

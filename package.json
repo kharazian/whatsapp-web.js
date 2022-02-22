@@ -8,7 +8,8 @@
     "test": "mocha tests --recursive",
     "test-single": "mocha",
     "shell": "node --experimental-repl-await ./shell.js",
-    "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose"
+    "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
+    "bimeh" : "nodemon RegisterBimeh/index.js"
   },
   "repository": {
     "type": "git",
@@ -50,6 +51,7 @@
     "jsdoc": "^3.6.4",
     "jsdoc-baseline": "^0.1.5",
     "mocha": "^9.0.2",
+    "nodemon": "^2.0.15",
     "sinon": "^13.0.1"
   },
   "engines": {

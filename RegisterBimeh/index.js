@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { Client, Location, List, Buttons } = require('../index');
+const { Client, Location, List, Buttons, MessageMedia } = require('../index');
 
 const config = require('./config')
 const initDB = require('./database') 
@@ -315,12 +315,14 @@ async function startApp() {
 
 async function dispatchMsg(msg){
     msg.body = msg.body.replace('*','');
+    msg.body = msg.body.replace(' ','');
     var requestBimeh = await requestModel.findOne({phoneNumber: msg.from.replace('@c.us',''), finished: false})
     if(!requestBimeh){
         requestBimeh = new requestModel({
             dateRequest: Date().toString(),
             phoneNumber: msg.from.replace('@c.us',''),
             meliCode : 0,
+            relMeliCode : 0,
             finished : false,
             state: enums.state.Initial,
             commands  : []
@@ -343,25 +345,25 @@ async function dispatchMsg(msg){
     var bimeh;
     if(requestBimeh.meliCode == 0) {
         if(!checkCodeMeli(msg.body)){
-            // Send a new message as a reply to the current one
-            msg.reply(msgString.CustomerIdentityCodeEnter);
+            // Send a new message as a reply to the current one            
+            client.sendMessage(msg.from, msgString.CusIdCodeEnter);
             return false;
         }
         bimeh = await bimehModel.findOne({ meliCode: msg.body});
         if(!bimeh){
-            msg.reply(msgString.CustomerIdentityCodeNotFound.format( msg.body));
+            client.sendMessage(msg.from, msgString.CusIdCodeNotFound.format( msg.body));
             return false;            
         }
         else if(bimeh.finished) {
-            msg.reply(msgString.CustomerIdentityCodeNotFound.format(bimeh.meliCode,bimeh.name, bimeh.family));
-            return false;            
+            requestBimeh.meliCode = Number(msg.body);
+            requestBimeh.state = enums.state.Confirm;
+            await requestBimeh.save();
+            ShowConfirm(msg, bimeh);         
         }
         else {
             requestBimeh.meliCode = Number(msg.body);
             requestBimeh.state = enums.state.ShowInvoice;
-            requestBimeh.save(function (err) {
-                if (!err) console.log('Success!');
-            });
+            await requestBimeh.save();
             ShowMenu(msg, bimeh);
         }
     }
@@ -370,12 +372,15 @@ async function dispatchMsg(msg){
         switch(requestBimeh.state) {
             // ------------------------------------------------------------------------------------------------
             case enums.state.ShowInvoice:
-                if(msg.selectedButtonId == 'CustomerShowInvoiceBtnEnableAll') {
+                if(msg.selectedButtonId == 'CusShowInvoiceBtnEnableAll') {
                     bimeh.hasBimeh = true;
                     bimeh.cost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
                     bimeh.totalCost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
+                    await bimeh.save();
+                    ShowMenu(msg, bimeh);
+                    return false;            
                 }
-                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnDisableAll') {                    
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnDisableAll') {                    
                     bimeh.hasBimeh = false;
                     bimeh.cost = 0;
                     bimeh.totalCost = 0;
@@ -383,34 +388,99 @@ async function dispatchMsg(msg){
                         element.hasBimeh = false;
                         element.cost = 0;
                     });
+                    await bimeh.save();
+                    ShowMenu(msg, bimeh);
+                    return false;            
                 }
-                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnAddNewRelation') {  
-                    
-                }
-                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnEnableRealtion') {
-                    requestBimeh.state = enums.state.RelEnable;
-                    await requestBimeh.save();  
-                    msg.reply(msgString.CustomerIdentityCodeEnterRelationEnable.format( bimeh.name, bimeh.family));
-                }
-                else if(msg.selectedButtonId == 'CustomerShowInvoiceBtnDisableRelation') { 
-                    requestBimeh.state = enums.state.RelDisable;
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnEditRel') {  
+                    requestBimeh.state = enums.state.ShowRelation;
                     await requestBimeh.save();
-                    msg.reply(msgString.CustomerIdentityCodeEnterRelationDisable.format( bimeh.name, bimeh.family));
+                    client.sendMessage(msg.from, msgString.ReCusIdCodeEnter);
+                    return false;            
                 }
-
-                ShowMenu(msg, bimeh);
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnConfirm') {
+                    requestBimeh.state = enums.state.Confirm;
+                    await requestBimeh.save();
+                    bimeh.finished = true;
+                    await bimeh.save();
+                    ShowConfirm(msg, bimeh);
+                    return false;            
+                }
+                if(bimeh.finished){
+                    ShowConfirm(msg, bimeh);
+                }
+                else {
+                    ShowMenu(msg, bimeh);
+                }
               break;
 
             // ------------------------------------------------------------------------------------------------
-            case enums.state.RelEnable:
-                relEdit(msg, bimeh, requestBimeh, true);
-              break;
+            case enums.state.ShowRelation:
+                if(requestBimeh.relMeliCode == 0) {
+                    if(isNaN(msg.body)){
+                        client.sendMessage(msg.from, msgString.CusIdCodeNotFound.format( msg.body));
+                        return false;            
+                    }
+                    relBimeh = await bimeh.relations.find(el => el.meliCode === Number(msg.body));
+                    if(!relBimeh){
+                        client.sendMessage(msg.from, msgString.CusIdCodeNotFound.format( msg.body));
+                        return false;            
+                    }
+                    else {
+                        requestBimeh.relMeliCode = Number(msg.body);
+                        await requestBimeh.save();
+                        ShowRel(msg, relBimeh);
+                        return false;            
+                    }
+                }
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnEnableRel') {
+                    relBimeh = bimeh.relations.find(el => el.meliCode === requestBimeh.relMeliCode)
+                    relBimeh.hasBimeh = true;
+                    relBimeh.cost = 14400000;
+                    bimeh.totalCost = bimeh.totalCost + 14400000;
+                    await bimeh.save();               
+                    requestBimeh.state = enums.state.ShowInvoice;
+                    requestBimeh.relMeliCode = 0;
+                    await requestBimeh.save();
+                    ShowMenu(msg, bimeh);
+                    return false;            
+                }
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnDisableRel') { 
+                    relBimeh = bimeh.relations.find(el => el.meliCode === requestBimeh.relMeliCode)                  
+                    relBimeh.hasBimeh = false;
+                    relBimeh.cost = 0;
+                    bimeh.totalCost = bimeh.totalCost - 14400000;
+                    await bimeh.save();               
+                    requestBimeh.state = enums.state.ShowInvoice;
+                    requestBimeh.relMeliCode = 0;
+                    await requestBimeh.save();
+                    ShowMenu(msg, bimeh);
+                    return false;            
+                }
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnRetuen') {            
+                    requestBimeh.state = enums.state.ShowInvoice;
+                    requestBimeh.relMeliCode = 0;
+                    await requestBimeh.save();
+                    ShowMain(msg, bimeh);
+                    return false;            
+                }
+                relBimeh = await bimeh.relations.find(el => el.meliCode === requestBimeh.relMeliCode);
+                ShowRel(msg, relBimeh);
+            break;
 
             // ------------------------------------------------------------------------------------------------
-            case enums.state.RelDisable:
-                relEdit(msg, bimeh, requestBimeh, false);
-
-              // code block
+            case enums.state.Confirm:              
+                if(msg.selectedButtonId == 'CusShowInvoiceBtnPrint') { 
+                    printBimeh(msg, bimeh);
+                    return false;            
+                }
+                else if(msg.selectedButtonId == 'CusShowInvoiceBtnClose') {            
+                    requestBimeh.state = enums.state.Finished;
+                    requestBimeh.finished = true;
+                    await requestBimeh.save();
+                    return false;            
+                }
+                ShowConfirm(msg, bimeh);
               break;
 
             // ------------------------------------------------------------------------------------------------
@@ -420,48 +490,65 @@ async function dispatchMsg(msg){
     }
 
 }
-const relEdit = async function(msg, bimeh, requestBimeh, hasBimeh){
-    if(!checkCodeMeli(msg.body)){
-        // Send a new message as a reply to the current one
-        msg.reply(msgString.CustomerIdentityCodeEnter);
-        return false;
-    }
-    var relBimeh = await bimeh.findOne({ meliCode: msg.body});
-    if(!relBimeh){
-        msg.reply(msgString.CustomerIdentityCodeNotFound.format( msg.body));
-    }
-    else {
-        relBimeh.hasBimeh = hasBimeh
-        relBimeh.cost = hasBimeh ? 14400000 : 0;
-        bimeh.totalCost = bimeh.relations.reduce( (pValue, cValue) => {
-            return pValue.cost + cValue.cost;
-        })
-        await bimeh.save();
-        requestBimeh.state = enums.state.ShowInvoice;
-        await requestBimeh.save();
-        msg.reply(msgString.CustomerRelationEdited.format(relBimeh.relation,relBimeh.fullName, relBimeh.meliCode, msgString.EnableOrDisbale(relBimeh.hasBimeh)));
-        ShowMenu(msg, bimeh);
-    }
+
+const printBimeh = function(msg, bimeh){
+    const media = MessageMedia.fromFilePath('./a.pdf');
+    client.sendMessage(msg.from, media);
 }
+
+const ShowConfirm = function(msg, bimeh) {
+    let btns = [];
+    btns.push({id: 'CusShowInvoiceBtnPrint', body: msgString.CusShowInvoiceBtnPrint});
+    btns.push({id: 'CusShowInvoiceBtnClose', body: msgString.CusShowInvoiceBtnClose});
+    
+    let button = new Buttons(
+        bimeh.relations.reduce(( pValue, cValue) => {
+            return msgString.CusShowInvoiceBody.format(pValue.relation, pValue.meliCode, pValue.fullName, msgString.EnableOrDisbale(pValue.hasBimeh), pValue.cost) + 
+            msgString.CusShowInvoiceBody.format(cValue.relation, cValue.meliCode, cValue.fullName, msgString.EnableOrDisbale(cValue.hasBimeh), cValue.cost);
+        }),
+        btns,
+        msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost),
+        msgString.CusShowInvoiceFooter.format(bimeh.totalCost));
+    client.sendMessage(msg.from, button);
+}
+
+
+const ShowRel = async function(msg, relBimeh){
+    let btns = [];
+    if(relBimeh.hasBimeh) {
+        btns.push({id: 'CusShowInvoiceBtnDisableRel', body: msgString.CusShowInvoiceBtnDisableRel});
+        btns.push({id: 'CusShowInvoiceBtnRetuen', body: msgString.CusShowInvoiceBtnRetuen});
+    }
+    else {        
+        btns.push({id: 'CusShowInvoiceBtnEnableRel', body: msgString.CusShowInvoiceBtnEnableRel});
+        btns.push({id: 'CusShowInvoiceBtnRetuen', body: msgString.CusShowInvoiceBtnRetuen});
+    }
+    let button = new Buttons(
+        msgString.CusShowRelBody.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName, msgString.EnableOrDisbale(relBimeh.hasBimeh), relBimeh.cost),
+        btns,
+        msgString.CusShowRelTitle.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName),
+        msgString.CusShowRelFooter.format(relBimeh.cost));
+    client.sendMessage(msg.from, button);
+}
+
 const ShowMenu = function(msg, bimeh) {
     let btns = [];
     if(bimeh.hasBimeh) {
-        btns.push({id: 'CustomerShowInvoiceBtnDisableAll', body: msgString.CustomerShowInvoiceBtnDisableAll});
-        btns.push({id: 'CustomerShowInvoiceBtnAddNewRelation', body: msgString.CustomerShowInvoiceBtnAddNewRelation});
-        btns.push({id: 'CustomerShowInvoiceBtnEnableRealtion', body: msgString.CustomerShowInvoiceBtnEnableRealtion});
-        btns.push({id: 'CustomerShowInvoiceBtnDisableRelation', body: msgString.CustomerShowInvoiceBtnDisableRelation});
+        btns.push({id: 'CusShowInvoiceBtnDisableAll', body: msgString.CusShowInvoiceBtnDisableAll});
+        btns.push({id: 'CusShowInvoiceBtnEditRel', body: msgString.CusShowInvoiceBtnEditRel});
+        btns.push({id: 'CusShowInvoiceBtnConfirm', body: msgString.CusShowInvoiceBtnConfirm});
     }
     else {        
-        btns.push({id: 'CustomerShowInvoiceBtnEnableAll', body: msgString.CustomerShowInvoiceBtnEnableAll});
+        btns.push({id: 'CusShowInvoiceBtnEnableAll', body: msgString.CusShowInvoiceBtnEnableAll});
     }
     let button = new Buttons(
         bimeh.relations.reduce(( pValue, cValue) => {
-            return msgString.CustomerShowInvoiceBody.format(pValue.relation, pValue.meliCode, pValue.fullName, msgString.EnableOrDisbale(pValue.hasBimeh), pValue.cost) + 
-            msgString.CustomerShowInvoiceBody.format(cValue.relation, cValue.meliCode, cValue.fullName, msgString.EnableOrDisbale(cValue.hasBimeh), cValue.cost);
+            return msgString.CusShowInvoiceBody.format(pValue.relation, pValue.meliCode, pValue.fullName, msgString.EnableOrDisbale(pValue.hasBimeh), pValue.cost) + 
+            msgString.CusShowInvoiceBody.format(cValue.relation, cValue.meliCode, cValue.fullName, msgString.EnableOrDisbale(cValue.hasBimeh), cValue.cost);
         }),
         btns,
-        msgString.CustomerShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost),
-        msgString.CustomerShowInvoiceFooter.format(bimeh.totalCost));
+        msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost),
+        msgString.CusShowInvoiceFooter.format(bimeh.totalCost));
     client.sendMessage(msg.from, button);
 }
 
