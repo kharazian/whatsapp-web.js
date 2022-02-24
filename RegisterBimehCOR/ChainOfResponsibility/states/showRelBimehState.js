@@ -2,9 +2,6 @@ const RequestState = require('./requestState');
 const msgString = require('../../utils/msgString')
 const bimehModel = require('../../models/bimehModel');
 const { Buttons } = require('../../../index');
-const ShowConfirmState = require('./showConfirmState')
-const GetRelMeliCodeState = require('./getRelMeliCodeState')
-const ShowBimehState = require('./showBimehState')
 
 
 
@@ -17,6 +14,7 @@ showRelBimehState.prototype.constructor = showRelBimehState;
 
 showRelBimehState.prototype.check = async function(request) {
     let bimeh = await bimehModel.findOne({ meliCode: request.meliCode});
+    let relBimeh = bimeh.relations.find(el => el.meliCode === Number(request.relMeliCode));
     if(request.btn == '') {
         let btns = [];
         if(relBimeh.hasBimeh) {
@@ -28,7 +26,7 @@ showRelBimehState.prototype.check = async function(request) {
             btns.push({id: 'CusShowInvoiceBtnRetuen', body: msgString.CusShowInvoiceBtnRetuen});
         }
         let button = new Buttons(
-            msgString.CusShowRelBody.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName, msgString.EnableOrDisbale(relBimeh.hasBimeh), relBimeh.cost),
+            msgString.CusShowRelBody.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName, msgString.EnableOrDisbale(relBimeh.hasBimeh), msgString.ShowCost(relBimeh.cost)),
             btns,
             msgString.CusShowRelTitle.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName),
             msgString.CusShowRelFooter.format(relBimeh.cost));
@@ -43,8 +41,7 @@ showRelBimehState.prototype.check = async function(request) {
         request.relMeliCode = 0;
         request.btn = "";
         await request.save();
-        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
+        this.requestChecker.ShowBimehState.check(request);
     }
     else if(request.btn == 'CusShowInvoiceBtnEnableRel') {
         relBimeh = bimeh.relations.find(el => el.meliCode === request.relMeliCode)
@@ -55,15 +52,13 @@ showRelBimehState.prototype.check = async function(request) {
         request.relMeliCode = 0;
         request.btn = "";
         await request.save();
-        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
+        this.requestChecker.ShowBimehState.check(request);
     }
     else if(request.btn == 'CusShowInvoiceBtnRetuen') {
         request.relMeliCode = 0;
         request.btn = "";
         await request.save();
-        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
+        this.requestChecker.ShowBimehState.check(request);
     }
 }
 

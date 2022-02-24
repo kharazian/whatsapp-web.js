@@ -2,6 +2,7 @@ const InitialState = require('./states/initilState')
 
 const RequestChecker = function() {
     this.currentState;
+    this.showBimehState;
     this.client;
  };
  

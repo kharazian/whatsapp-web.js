@@ -9,7 +9,7 @@
     "test-single": "mocha",
     "shell": "node --experimental-repl-await ./shell.js",
     "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
-    "bimeh" : "nodemon RegisterBimeh/index.js"
+    "bimeh": "nodemon RegisterBimeh/index.js"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,7 @@
     "@pedroslopez/moduleraid": "^5.0.2",
     "detect-libc": "^2.0.1",
     "fluent-ffmpeg": "^2.1.2",
+    "jspdf": "^2.5.1",
     "jsqr": "^1.3.1",
     "mime": "^3.0.0",
     "mongoose": "^5.13.8",

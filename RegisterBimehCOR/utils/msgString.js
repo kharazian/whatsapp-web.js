@@ -20,7 +20,8 @@ const msgString = {
     CusShowInvoiceBtnEnableRel : '*فعال کردن بیمه وابسته',
     CusShowInvoiceBtnDisableRel : '*غیرفعال کردن بیمه وابسته',
     CusShowInvoiceBtnConfirm : '*تایید نهایی',
-    EnableOrDisbale : x => x ? 'فعال' : 'غیرفعال',
+    EnableOrDisbale : x => x ? '*فعال*' : '*غیرفعال*',
+    ShowCost : x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","),
 }
 
 module.exports = msgString;

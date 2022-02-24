@@ -13,13 +13,13 @@ GetRelMeliCodeState.prototype = Object.create(RequestState.prototype);
 GetRelMeliCodeState.prototype.constructor = GetRelMeliCodeState;
 
 GetRelMeliCodeState.prototype.check = async function(request) {
-    if(request.relMeliCode  && request.relMeliCode != -1) {
+    if(request.relMeliCode > 0) {
         this.requestChecker.currentState = new ShowRelBimehState(this.requestChecker);
         this.requestChecker.currentState.check(request);
     }
     else {
         if(isNaN(request.body)){
-            this.requestChecker.client.sendMessage(request.from, msgString.CusIdCodeEnter);
+            this.requestChecker.client.sendMessage(request.from, msgString.ReCusIdCodeEnter);
         }
         else {
             let bimeh = await bimehModel.findOne({ meliCode: Number(request.meliCode)});

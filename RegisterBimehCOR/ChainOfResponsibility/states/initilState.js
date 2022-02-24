@@ -30,6 +30,7 @@ InitialState.prototype.constructor = InitialState;
 InitialState.prototype.check = async function(request) {
     if(request.meliCode) {
         this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
+        this.requestChecker.ShowBimehState = this.requestChecker.currentState;
         this.requestChecker.currentState.check(request);
     }
     else {
@@ -45,6 +46,7 @@ InitialState.prototype.check = async function(request) {
                 request.meliCode = Number(request.body);
                 await request.save();
                 this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
+                this.requestChecker.ShowBimehState = this.requestChecker.currentState;
                 this.requestChecker.currentState.check(request);
             }
         }

@@ -3,7 +3,6 @@ const { Client, Location, List, Buttons, MessageMedia } = require('../index');
 
 const config = require('./config')
 const initDB = require('./database') 
-const enums = require('./models/enum')
 const requestModel = require('./models/requestModel');
 const RequestCheker = require('./ChainOfResponsibility/requestChecker');
 
@@ -61,7 +60,6 @@ async function dispatchMsg(msg){
           meliCode : 0,
           relMeliCode : 0,
           finished : false,
-          state: enums.state.Initial,
           commands  : []
       });
       await requestBimeh.save();

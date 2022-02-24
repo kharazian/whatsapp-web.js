@@ -19,13 +19,14 @@ ShowConfirmState.prototype.check = async function(request) {
         btns.push({id: 'CusShowInvoiceBtnClose', body: msgString.CusShowInvoiceBtnClose});
         
         let button = new Buttons(
-            bimeh.relations.reduce(( pValue, cValue) => {
-                return msgString.CusShowInvoiceBody.format(pValue.relation, pValue.meliCode, pValue.fullName, msgString.EnableOrDisbale(pValue.hasBimeh), pValue.cost) + 
-                msgString.CusShowInvoiceBody.format(cValue.relation, cValue.meliCode, cValue.fullName, msgString.EnableOrDisbale(cValue.hasBimeh), cValue.cost);
+            bimeh.relations.map(el => {
+                return msgString.CusShowInvoiceBody.format(el.relation, el.meliCode, el.fullName, msgString.EnableOrDisbale(el.hasBimeh), msgString.ShowCost(el.cost));
+            }).reduce( (pValue, cValue) => {
+                return pValue + cValue;
             }),
             btns,
-            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost),
-            msgString.CusShowInvoiceFooter.format(bimeh.totalCost));
+            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), msgString.ShowCost(bimeh.cost)),
+            msgString.CusShowInvoiceFooter.format(msgString.ShowCost(bimeh.totalCost)));
         this.requestChecker.client.sendMessage(request.from, button);       
     }
     else if(request.btn == 'CusShowInvoiceBtnPrint') {
@@ -34,8 +35,7 @@ ShowConfirmState.prototype.check = async function(request) {
         request.btn = "";
         await request.save();
     }
-    else if(request.btn == 'CusShowInvoiceBtnClose') {          
-        request.state = enums.state.Finished;
+    else if(request.btn == 'CusShowInvoiceBtnClose') {
         request.finished = true;
         request.btn = "";
         await request.save();
