@@ -3,6 +3,7 @@ const { Client, Location, List, Buttons, MessageMedia } = require('../index');
 
 const config = require('./config')
 const initDB = require('./database') 
+const makePdf = require('./pdfMaker/index')
 const requestModel = require('./models/requestModel');
 const RequestCheker = require('./ChainOfResponsibility/requestChecker');
 
@@ -18,6 +19,7 @@ const client = new Client({ puppeteer: { headless: false }, session: sessionCfg 
 async function startApp() {
   const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
+  await makePdf(36550299);
   await client.initialize();
   
   client.on('message', async msg => {
