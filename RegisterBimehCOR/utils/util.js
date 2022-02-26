@@ -4,9 +4,9 @@ String.prototype.format = function () {
     // use replace to iterate over the string
     // select the match and check if related argument is present
     // if yes, replace the match with the argument
-    return this.replace(/{([0-9]+)}([0-9])/g, function (match, index, pad) {
+    return this.replace(/{([0-9]+)}([0-9]) /g, function (match, index, pad) {
       // check if the argument is present
-      return typeof args[index] == 'undefined' ? match : args[index].padEnd(pad);
+      return typeof args[index] == 'undefined' ? match : args[index].toString().padEnd(pad);
     });
   };
   

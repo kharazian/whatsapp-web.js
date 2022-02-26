@@ -1,8 +1,8 @@
 const RequestState = require('./requestState');
 const msgString = require('../../utils/msgString')
 const bimehModel = require('../../models/bimehModel');
-const { Buttons } = require('../../../index');
-const aa = require('../../pdfMaker/index');
+const { Buttons, MessageMedia } = require('../../../index');
+const makePdf = require('../../pdfMaker/index');
 
 
 const ShowConfirmState = function() {
@@ -33,9 +33,9 @@ ShowConfirmState.prototype.check = async function(request) {
     else if(request.btn == 'CusShowInvoiceBtnPrint') {
         try {
             await makePdf(request.meliCode);
-            let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+melicode+"_Receipt.pdf");
+            let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+request.meliCode+"_Receipt.pdf");
             this.requestChecker.client.sendMessage(request.from, media);
-            media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+melicode+"_Bank.pdf");
+            media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+request.meliCode+"_Bank.pdf");
             this.requestChecker.client.sendMessage(request.from, media);
             media = MessageMedia.fromFilePath("./RegisterBimehCOR/pdfMaker/bimeh.pdf");
             this.requestChecker.client.sendMessage(request.from, media);
