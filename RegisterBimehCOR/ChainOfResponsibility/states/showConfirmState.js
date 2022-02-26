@@ -2,6 +2,7 @@ const RequestState = require('./requestState');
 const msgString = require('../../utils/msgString')
 const bimehModel = require('../../models/bimehModel');
 const { Buttons } = require('../../../index');
+const aa = require('../../pdfMaker/index');
 
 
 const ShowConfirmState = function() {
@@ -30,10 +31,20 @@ ShowConfirmState.prototype.check = async function(request) {
         this.requestChecker.client.sendMessage(request.from, button);       
     }
     else if(request.btn == 'CusShowInvoiceBtnPrint') {
-        const media = MessageMedia.fromFilePath('./a.pdf');
-        this.requestChecker.client.sendMessage(request.from, media);
-        request.btn = "";
-        await request.save();
+        try {
+            await makePdf(request.meliCode);
+            let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+melicode+"_Receipt.pdf");
+            this.requestChecker.client.sendMessage(request.from, media);
+            media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+melicode+"_Bank.pdf");
+            this.requestChecker.client.sendMessage(request.from, media);
+            media = MessageMedia.fromFilePath("./RegisterBimehCOR/pdfMaker/bimeh.pdf");
+            this.requestChecker.client.sendMessage(request.from, media);
+            request.btn = "";
+            await request.save();
+            
+        } catch (error) {
+            
+        }
     }
     else if(request.btn == 'CusShowInvoiceBtnClose') {
         request.finished = true;
