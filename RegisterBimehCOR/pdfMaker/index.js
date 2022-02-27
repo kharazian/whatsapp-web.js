@@ -1,6 +1,7 @@
 const { jsPDF } = require("jspdf"); // will automatically load the node version
 const fs = require('fs');
-const BimehModel = require('../models/bimehModel')
+const BimehModel = require('../models/bimehModel');
+const pdfmodel = require('./pdfModel');
 
 let bitmapReceipt = fs.readFileSync("./RegisterBimehCOR/pdfMaker/bimehReceipt.jpg");
 let imgDataReceipt = new Buffer.alloc(bitmapReceipt.length, bitmapReceipt).toString('base64');
@@ -13,7 +14,9 @@ let height = 0;
 const makePdfReceipt = function(doc, bimeh){ 
   doc.addImage(imgDataReceipt, "JPEG", 0, 0, width, height);
 
-  doc.text( bimeh.name + " " + bimeh.family , 170, 40, null, null, "right");
+  pdfmodel.bimeh.forEach(element => {
+    doc.text( element.value , element.x, element.y, null, null, "right");    
+  });
 
   doc.save("./RegisterBimehCOR/data/" + bimeh.meliCode + "_Receipt.pdf"); // will save the file in the current working directory
 }
@@ -21,8 +24,10 @@ const makePdfReceipt = function(doc, bimeh){
 const makePdfBank = function(doc, bimeh){ 
 
   doc.addImage(imgDataBank, "JPEG", 0, 0, width, height);
-
-  doc.text( bimeh.name + " " + bimeh.family , 170, 40, null, null, "right");
+  
+  pdfmodel.bank.forEach(element => {
+    doc.text( element.value , element.x, element.y, null, null, "right");    
+  });
 
   doc.save("./RegisterBimehCOR/data/" + bimeh.meliCode + "_Bank.pdf"); // will save the file in the current working directory
 }
@@ -42,6 +47,20 @@ const makePdf = async function(melicode){
       doc.setFontSize(10);
       makePdfReceipt(doc, bimeh);
       makePdfBank(doc, bimeh);
+
+      doc.addImage(imgDataReceipt, "JPEG", 0, 0, width, height);
+      pdfmodel.bimeh.forEach(element => {
+        doc.text( element.value , element.x, element.y, null, null, "right");    
+      });      
+
+      doc.addPage();
+      doc.addImage(imgDataBank, "JPEG", 0, 0, width, height);  
+      pdfmodel.bank.forEach(element => {
+        doc.text( element.value , element.x, element.y, null, null, "right");    
+      });
+    
+      doc.save("./RegisterBimehCOR/data/" + bimeh.meliCode + ".pdf"); // will save the file in the current working directory
+          
     }
 }
 

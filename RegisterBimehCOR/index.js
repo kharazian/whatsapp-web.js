@@ -28,16 +28,16 @@ client.on('authenticated', (session) => {
 client.on('message', async msg => {
   console.log('MESSAGE RECEIVED', msg);
 
-  if (msg.body[0] === '*')
-  {
+  // if (msg.body[0] === '*')
+  // {
       dispatchMsg(msg);
-  }
+  // }
 });
 
 async function startApp() {
   const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
-  // await makePdf(36550299);
+  // await makePdf(40076520);
   await client.initialize();
   
   //--------------------
@@ -61,7 +61,8 @@ async function startApp() {
 
 async function dispatchMsg(msg){
 
-  msg.body = msg.body.replace('*','');
+  // msg.body = msg.body.replace('*','');
+  msg.body = msg.body.numEnglish();
   
   var requestBimeh = await requestModel.findOne({from: msg.from, finished: false})
   if(!requestBimeh){
