@@ -26,7 +26,7 @@ showRelBimehState.prototype.check = async function(request) {
             btns.push({id: 'CusShowInvoiceBtnRetuen', body: msgString.CusShowInvoiceBtnRetuen});
         }
         let button = new Buttons(
-            msgString.CusShowRelBody.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName, msgString.EnableOrDisbale(relBimeh.hasBimeh), msgString.ShowCost(relBimeh.cost)),
+            msgString.CusShowRelBody.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName, msgString.EnableOrDisbale(relBimeh.hasBimeh), relBimeh.cost.numSeparator()),
             btns,
             msgString.CusShowRelTitle.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName),
             msgString.CusShowRelFooter.format(relBimeh.cost));

@@ -21,13 +21,13 @@ ShowConfirmState.prototype.check = async function(request) {
         
         let button = new Buttons(
             bimeh.relations.map(el => {
-                return msgString.CusShowInvoiceBody.format(el.relation, el.meliCode, el.fullName, msgString.EnableOrDisbale(el.hasBimeh), msgString.ShowCost(el.cost));
+                return msgString.CusShowInvoiceBody.format(el.relation, el.meliCode, el.fullName, msgString.EnableOrDisbale(el.hasBimeh), el.cost.numSeparator());
             }).reduce( (pValue, cValue) => {
                 return pValue + cValue;
-            }),
+            }, msgString.CusShowNoRel),
             btns,
-            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), msgString.ShowCost(bimeh.cost)),
-            msgString.CusShowInvoiceFooter.format(msgString.ShowCost(bimeh.totalCost)));
+            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost.numSeparator()),
+            msgString.CusShowInvoiceFooter.format(bimeh.totalCost.numSeparator()));
         this.requestChecker.client.sendMessage(request.from, button);       
     }
     else if(request.btn == 'CusShowInvoiceBtnPrint') {

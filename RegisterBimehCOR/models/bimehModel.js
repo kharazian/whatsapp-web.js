@@ -15,6 +15,7 @@ const relationSchema = new mongoose.Schema({
 });
 
 const bimehSchema = new mongoose.Schema ({
+  file: String,
   name: String, 
   family: String,
   fatherName: String,

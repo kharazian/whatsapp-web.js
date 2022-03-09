@@ -15,4 +15,8 @@ String.prototype.format = function () {
     return this.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
               .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
   };
+
+  Number.prototype.numSeparator = function () {
+    return this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
   

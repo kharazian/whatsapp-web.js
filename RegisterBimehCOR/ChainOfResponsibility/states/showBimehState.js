@@ -17,6 +17,14 @@ ShowBimehState.prototype.constructor = ShowBimehState;
 
 ShowBimehState.prototype.check = async function(request) {
     let bimeh = await bimehModel.findOne({ meliCode: request.meliCode});
+    bimeh.cost = bimeh.hasBimeh ? (bimeh.workplaceCode == 1 ? 6000000 : 14400000) : 0;
+    let sumCost = bimeh.cost;
+    bimeh.relations.forEach(el => {
+        el.cost = el.hasBimeh ? 14400000 : 0;
+        sumCost = sumCost + el.cost;
+    });
+    bimeh.totalCost = sumCost;
+    await bimeh.save();
     if(bimeh.finished) {
         this.requestChecker.currentState = new ShowConfirmState(this.requestChecker);
         this.requestChecker.currentState.check(request);         
@@ -32,22 +40,23 @@ ShowBimehState.prototype.check = async function(request) {
     else if(request.btn == '') {
         let btns = [];
         if(bimeh.hasBimeh) {
-            btns.push({id: 'CusShowInvoiceBtnDisableAll', body: msgString.CusShowInvoiceBtnDisableAll});
             btns.push({id: 'CusShowInvoiceBtnEditRel', body: msgString.CusShowInvoiceBtnEditRel});
             btns.push({id: 'CusShowInvoiceBtnConfirm', body: msgString.CusShowInvoiceBtnConfirm});
+            btns.push({id: 'CusShowInvoiceBtnClose', body: msgString.CusShowInvoiceBtnClose});
         }
         else {        
             btns.push({id: 'CusShowInvoiceBtnEnableAll', body: msgString.CusShowInvoiceBtnEnableAll});
+            btns.push({id: 'CusShowInvoiceBtnClose', body: msgString.CusShowInvoiceBtnClose});
         }
         let button = new Buttons(
             bimeh.relations.map(el => {
-                return msgString.CusShowInvoiceBody.format(el.relation, el.meliCode, el.fullName, msgString.EnableOrDisbale(el.hasBimeh), msgString.ShowCost(el.cost));
+                return msgString.CusShowInvoiceBody.format(el.relation, el.meliCode, el.fullName, msgString.EnableOrDisbale(el.hasBimeh), el.cost.numSeparator());
             }).reduce( (pValue, cValue) => {
                 return pValue + cValue;
-            }),
+            }, msgString.CusShowNoRel),
             btns,
-            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), msgString.ShowCost(bimeh.cost)),
-            msgString.CusShowInvoiceFooter.format(msgString.ShowCost(bimeh.totalCost)));
+            msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost.numSeparator()),
+            msgString.CusShowInvoiceFooter.format(bimeh.totalCost.numSeparator()));
         this.requestChecker.client.sendMessage(request.from, button);        
     }
     else if(request.btn == 'CusShowInvoiceBtnDisableAll') { 
@@ -82,12 +91,19 @@ ShowBimehState.prototype.check = async function(request) {
         this.requestChecker.currentState.check(request); 
     }
     else if(request.btn == 'CusShowInvoiceBtnConfirm') {
+        var date = new Date();
         bimeh.finished = true;
+        bimeh.signDate = date.toLocaleDateString('fa-ir');
         await bimeh.save();     
         request.btn = "";
         await request.save();
         this.requestChecker.currentState = new ShowConfirmState(this.requestChecker);
         this.requestChecker.currentState.check(request);
+    }
+    else if(request.btn == 'CusShowInvoiceBtnClose') {
+        request.finished = true;
+        request.btn = "";
+        await request.save();
     }
 }
 
