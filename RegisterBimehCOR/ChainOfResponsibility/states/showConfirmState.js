@@ -35,6 +35,7 @@ ShowConfirmState.prototype.check = async function(request) {
             await makePdf(request.meliCode);
             let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+request.meliCode+".pdf");
             this.requestChecker.client.sendMessage(request.from, media);
+            request.finished = true;
             request.btn = "";
             await request.save();
             

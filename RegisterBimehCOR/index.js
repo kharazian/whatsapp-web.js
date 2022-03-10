@@ -13,17 +13,44 @@ if (fs.existsSync('./' + SESSION_FILE_PATH)) {
     sessionCfg = require('../' + SESSION_FILE_PATH);
 }
 
-const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
+// const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
 
-client.on('authenticated', (session) => {
-  console.log('AUTHENTICATED', session);
-  sessionCfg=session;
-  fs.writeFile('./' +SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-      if (err) {
-        console.error(err);
-      }
+const client = new Client({
+  puppeteer: {
+    headless: false,
+    },
+    clientId: 'new'
   });
-});
+
+  client.on('ready', async() => {
+    console.log('Client is ready!');
+    checkWAP(checkRegisteredNumber).then(()=>{
+      checkLoop()
+    }).catch((err)=>{
+    clearTimeout(timer)
+    })
+  });
+  client.on('disconnected', (reason) => {
+    clearTimeout(timer)
+    fs.unlinkSync(SESSION_FILE_PATH, function(err) {
+    if(err) return console.log(err);
+    console.log('Session file deleted!');
+  });
+  client.destroy();
+    console.log('Client was logged out', reason);
+  });
+  
+  client.on('authenticated', (session) => {
+    clearTimeout(timer)
+    console.log('AUTHENTICATED', session);
+    console.log('AUTHENTICATED', session);
+    sessionCfg=session;
+    fs.writeFile('./' +SESSION_FILE_PATH, JSON.stringify(session), function (err) {
+        if (err) {
+          console.error(err);
+        }
+    });
+  });
 
 client.on('message', async msg => {
   try {
@@ -42,7 +69,9 @@ async function startApp() {
   const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
   // await makePdf(40076520);
-  await client.initialize();
+  client.initialize().catch((err)=>{
+    console.log(err)
+  });
   
   //--------------------
   //        test
