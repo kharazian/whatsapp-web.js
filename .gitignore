@@ -66,10 +66,12 @@ typings/
 # next.js build output
 .next
 
-# macOS Thumbnails
+# macOS
 ._*
+.DS_Store
 
 # Test sessions
 *session.json
 
 temp.csv
+.wwebjs_auth/
