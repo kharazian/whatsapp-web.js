@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+*.csv
 *.pdf
 *.mongodb
 npm-debug.log*
