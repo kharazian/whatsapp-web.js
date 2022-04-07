@@ -1,6 +1,10 @@
 {
   "name": "whatsapp-web.js",
+<<<<<<< HEAD
   "version": "1.16.4",
+=======
+  "version": "1.16.5",
+>>>>>>> 3a2acf71c21f5c4d68b7f59654606065b4f7efca
   "description": "Library for interacting with the WhatsApp Web API ",
   "main": "./index.js",
   "typings": "./index.d.ts",
@@ -40,9 +44,13 @@
     "mongoose": "^5.13.8",
     "node-fetch": "^2.6.5",
     "node-webpmux": "^3.1.0",
+<<<<<<< HEAD
     "puppeteer": "^13.0.0",
     "sharp": "^0.28.3",
     "winston": "^3.6.0"
+=======
+    "puppeteer": "^13.0.0"
+>>>>>>> 3a2acf71c21f5c4d68b7f59654606065b4f7efca
   },
   "devDependencies": {
     "@types/node-fetch": "^2.5.12",
