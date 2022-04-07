@@ -73,10 +73,6 @@ typings/
 
 # Test sessions
 *session.json
-<<<<<<< HEAD
 
 temp.csv
 .wwebjs_auth/
-=======
-.wwebjs_auth/
->>>>>>> 3a2acf71c21f5c4d68b7f59654606065b4f7efca
