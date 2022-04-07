@@ -877,21 +877,6 @@ class Client extends EventEmitter {
      */
     async getProfilePicUrl(contactId) {
         const profilePic = await this.pupPage.evaluate(async contactId => {
-<<<<<<< HEAD
-            let asyncPic;
-            if (window.Store.Features.features.MD_BACKEND) {
-                const chatWid = window.Store.WidFactory.createWid(contactId);
-                asyncPic = await window.Store.getProfilePicFull(chatWid).catch(() => {
-                    return undefined;
-                });
-            } else {
-                asyncPic = await window.Store.Wap.profilePicFind(contactId).catch(() => {
-                    return undefined;
-                });
-            }
-            return asyncPic;
-        }, contactId);
-=======
             try {
                 const chatWid = window.Store.WidFactory.createWid(contactId);
                 return await window.Store.ProfilePic.profilePicFind(chatWid);
@@ -900,8 +885,6 @@ class Client extends EventEmitter {
                 throw err;
             }
         }, contactId);
-        
->>>>>>> 3a2acf71c21f5c4d68b7f59654606065b4f7efca
         return profilePic ? profilePic.eurl : undefined;
     }
 
