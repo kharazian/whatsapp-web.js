@@ -53,7 +53,7 @@ const makePdf = async function(melicode){
       let pdfIndex = 1;
       for (let index = 0; index < bimeh.relations.length; index++) {
         const element = bimeh.relations[index];
-        if( element.hasBimeh ){
+        if( element.hasBimeh && index < 5){
           pdfBimeh.find(obj => obj.id == "fullName" + pdfIndex ).value = element.fullName;
           pdfBimeh.find(obj => obj.id == "sponsorship" + pdfIndex ).value = element.sponsorship;
           pdfBimeh.find(obj => obj.id == "meliCode" + pdfIndex ).value = element.meliCode.toString(); 

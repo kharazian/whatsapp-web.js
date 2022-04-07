@@ -3,7 +3,6 @@ const fs = require('fs');
 const config = require('./config')
 const initDB = require('./database') 
 const bimehModel = require('./models/bimehModel') 
-const logger = require('./utils/logger')
 
 
 let columns = [
@@ -36,7 +35,8 @@ let columns = [
     'fatherNameRel',
     'birthdayDateRel',
     'relationRel',
-    'costRel'
+    'costRel',
+    'hasBimehRel'
 ];
 
 let writeStream = fs.createWriteStream('./result.csv')
@@ -83,6 +83,7 @@ async function startApp() {
         newLine.push(bimeh.birthdayDate);
         newLine.push('اصلی');
         newLine.push(bimeh.cost);
+        newLine.push(bimeh.hasBimeh);
     
         writeStream.write(newLine.join(',')+ '\n', () => {
             // a line was written to stream
@@ -98,6 +99,7 @@ async function startApp() {
             newLine[27] = relBimeh.birthdayDate;
             newLine[28] = relBimeh.relation;
             newLine[29] = relBimeh.cost;
+            newLine[30] = relBimeh.hasBimeh;
             writeStream.write(newLine.join(',')+ '\n', () => {
                 // a line was written to stream
             });
