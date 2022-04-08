@@ -41,30 +41,30 @@ InitialState.prototype.check = async function(request) {
                 if( relBime[commands[0]] !== undefined) {
                     relBime[commands[0]] = commands[1];
                     await bimeh.save();
-                    this.requestChecker.client.sendMessage(request.from, msgString.CusCommandfinished.format());
+                    this.requestChecker.sendMessage(request.from, msgString.CusCommandfinished.format());
                 }
                 else {
-                    this.requestChecker.client.sendMessage(request.from, msgString.CusCommandWrongCommand.format());
+                    this.requestChecker.sendMessage(request.from, msgString.CusCommandWrongCommand.format());
                 }
             }
             else if( codeMeli[1] != '' ) {
-                this.requestChecker.client.sendMessage(request.from, msgString.CusCommandRelCodeMeli.format());     
+                this.requestChecker.sendMessage(request.from, msgString.CusCommandRelCodeMeli.format());     
             }
             else if(bimeh) {
                 if( bimeh[commands[0]] !== undefined) {
                     bimeh[commands[0]] = commands[1];
                     await bimeh.save();
-                    this.requestChecker.client.sendMessage(request.from, msgString.CusCommandfinished.format());
+                    this.requestChecker.sendMessage(request.from, msgString.CusCommandfinished.format());
                 }
                 else {
-                    this.requestChecker.client.sendMessage(request.from, msgString.CusCommandWrongCommand.format());
+                    this.requestChecker.sendMessage(request.from, msgString.CusCommandWrongCommand.format());
                 }            
             }
             else {
-                this.requestChecker.client.sendMessage(request.from, msgString.CusCommandCodeMeli.format());
+                this.requestChecker.sendMessage(request.from, msgString.CusCommandCodeMeli.format());
             }
         } catch (error) {
-            this.requestChecker.client.sendMessage(request.from, error.message);
+            this.requestChecker.sendMessage(request.from, error.message);
         }
         request.finished = true;
         await request.save();
@@ -76,12 +76,12 @@ InitialState.prototype.check = async function(request) {
     }
     else {
         if(isNaN(request.body)){
-            this.requestChecker.client.sendMessage(request.from, msgString.CusIdCodeEnter);
+            this.requestChecker.sendMessage(request.from, msgString.CusIdCodeEnter);
         }
         else {
             let bimeh = await bimehModel.findOne({ meliCode: Number(request.body)});
             if(!bimeh){
-                this.requestChecker.client.sendMessage(request.from, msgString.CusIdCodeNotFound.format(request.body));
+                this.requestChecker.sendMessage(request.from, msgString.CusIdCodeNotFound.format(request.body));
             }
             else {
                 request.meliCode = Number(request.body);

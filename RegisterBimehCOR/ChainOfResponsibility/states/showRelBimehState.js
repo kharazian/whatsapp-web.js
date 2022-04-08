@@ -15,7 +15,35 @@ showRelBimehState.prototype.constructor = showRelBimehState;
 showRelBimehState.prototype.check = async function(request) {
     let bimeh = await bimehModel.findOne({ meliCode: request.meliCode});
     let relBimeh = bimeh.relations.find(el => el.meliCode === Number(request.relMeliCode));
-    if(request.btn == '') {
+    if(request.btn == 'CusShowInvoiceBtnDisableRel' || request.body == '*7') { 
+        relBimeh = bimeh.relations.find(el => el.meliCode === request.relMeliCode)                  
+        relBimeh.hasBimeh = false;
+        relBimeh.cost = 0;
+        bimeh.totalCost = bimeh.totalCost - 14400000;
+        await bimeh.save();               
+        request.relMeliCode = 0;
+        request.btn = "";
+        await request.save();
+        this.requestChecker.ShowBimehState.check(request);
+    }
+    else if(request.btn == 'CusShowInvoiceBtnEnableRel' || request.body == '*6') {
+        relBimeh = bimeh.relations.find(el => el.meliCode === request.relMeliCode)
+        relBimeh.hasBimeh = true;
+        relBimeh.cost = 14400000;
+        bimeh.totalCost = bimeh.totalCost + 14400000;
+        await bimeh.save();
+        request.relMeliCode = 0;
+        request.btn = "";
+        await request.save();
+        this.requestChecker.ShowBimehState.check(request);
+    }
+    else if(request.btn == 'CusShowInvoiceBtnRetuen' || request.body == '*9') {
+        request.relMeliCode = 0;
+        request.btn = "";
+        await request.save();
+        this.requestChecker.ShowBimehState.check(request);
+    }
+    else {
         let btns = [];
         if(relBimeh.hasBimeh) {
             btns.push({id: 'CusShowInvoiceBtnDisableRel', body: msgString.CusShowInvoiceBtnDisableRel});
@@ -30,35 +58,7 @@ showRelBimehState.prototype.check = async function(request) {
             btns,
             msgString.CusShowRelTitle.format(relBimeh.relation, relBimeh.meliCode, relBimeh.fullName),
             msgString.CusShowRelFooter.format(relBimeh.cost));
-        this.requestChecker.client.sendMessage(request.from, button);      
-    }
-    else if(request.btn == 'CusShowInvoiceBtnDisableRel') { 
-        relBimeh = bimeh.relations.find(el => el.meliCode === request.relMeliCode)                  
-        relBimeh.hasBimeh = false;
-        relBimeh.cost = 0;
-        bimeh.totalCost = bimeh.totalCost - 14400000;
-        await bimeh.save();               
-        request.relMeliCode = 0;
-        request.btn = "";
-        await request.save();
-        this.requestChecker.ShowBimehState.check(request);
-    }
-    else if(request.btn == 'CusShowInvoiceBtnEnableRel') {
-        relBimeh = bimeh.relations.find(el => el.meliCode === request.relMeliCode)
-        relBimeh.hasBimeh = true;
-        relBimeh.cost = 14400000;
-        bimeh.totalCost = bimeh.totalCost + 14400000;
-        await bimeh.save();
-        request.relMeliCode = 0;
-        request.btn = "";
-        await request.save();
-        this.requestChecker.ShowBimehState.check(request);
-    }
-    else if(request.btn == 'CusShowInvoiceBtnRetuen') {
-        request.relMeliCode = 0;
-        request.btn = "";
-        await request.save();
-        this.requestChecker.ShowBimehState.check(request);
+        this.requestChecker.sendMessage(request.from, button);      
     }
 }
 

@@ -36,8 +36,54 @@ ShowBimehState.prototype.check = async function(request) {
     else if(request.relMeliCode) {
         this.requestChecker.currentState = new ShowRelBimehState(this.requestChecker);
         this.requestChecker.currentState.check(request);         
+    }    
+    else if(request.btn == 'CusShowInvoiceBtnDisableAll' || request.body == '*0') { 
+        bimeh.hasBimeh = false;
+        bimeh.cost = 0;
+        bimeh.totalCost = 0;
+        bimeh.relations.forEach(element => {
+            element.hasBimeh = false;
+            element.cost = 0;
+        });
+        await bimeh.save();
+        request.btn = "";
+        await request.save();
+        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
+        this.requestChecker.currentState.check(request);
     }
-    else if(request.btn == '') {
+    else if(request.btn == 'CusShowInvoiceBtnEnableAll' || request.body == '*4') {         
+        bimeh.hasBimeh = true;
+        bimeh.cost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
+        bimeh.totalCost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
+        await bimeh.save();
+        request.btn = "";
+        await request.save();
+        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
+        this.requestChecker.currentState.check(request);
+    }
+    else if(request.btn == 'CusShowInvoiceBtnEditRel' || request.body == '*1') {
+        request.btn = "";
+        request.relMeliCode = -1;
+        await request.save(); 
+        this.requestChecker.currentState = new GetRelMeliCodeState(this.requestChecker);
+        this.requestChecker.currentState.check(request); 
+    }
+    else if(request.btn == 'CusShowInvoiceBtnConfirm' || request.body == '*2') {
+        var date = new Date();
+        bimeh.finished = true;
+        bimeh.signDate = date.toLocaleDateString('fa-ir');
+        await bimeh.save();     
+        request.btn = "";
+        await request.save();
+        this.requestChecker.currentState = new ShowConfirmState(this.requestChecker);
+        this.requestChecker.currentState.check(request);
+    }
+    else if(request.btn == 'CusShowInvoiceBtnClose' || request.body == '*3') {
+        request.finished = true;
+        request.btn = "";
+        await request.save();
+    }
+    else {
         let btns = [];
         if(bimeh.hasBimeh) {
             btns.push({id: 'CusShowInvoiceBtnEditRel', body: msgString.CusShowInvoiceBtnEditRel});
@@ -57,53 +103,7 @@ ShowBimehState.prototype.check = async function(request) {
             btns,
             msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost.numSeparator()),
             msgString.CusShowInvoiceFooter.format(bimeh.totalCost.numSeparator()));
-        this.requestChecker.client.sendMessage(request.from, button);        
-    }
-    else if(request.btn == 'CusShowInvoiceBtnDisableAll') { 
-        bimeh.hasBimeh = false;
-        bimeh.cost = 0;
-        bimeh.totalCost = 0;
-        bimeh.relations.forEach(element => {
-            element.hasBimeh = false;
-            element.cost = 0;
-        });
-        await bimeh.save();
-        request.btn = "";
-        await request.save();
-        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
-    }
-    else if(request.btn == 'CusShowInvoiceBtnEnableAll') {         
-        bimeh.hasBimeh = true;
-        bimeh.cost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
-        bimeh.totalCost = bimeh.workplaceCode == 1 ? 6000000 : 14400000;
-        await bimeh.save();
-        request.btn = "";
-        await request.save();
-        this.requestChecker.currentState = new ShowBimehState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
-    }
-    else if(request.btn == 'CusShowInvoiceBtnEditRel') {
-        request.btn = "";
-        request.relMeliCode = -1;
-        await request.save(); 
-        this.requestChecker.currentState = new GetRelMeliCodeState(this.requestChecker);
-        this.requestChecker.currentState.check(request); 
-    }
-    else if(request.btn == 'CusShowInvoiceBtnConfirm') {
-        var date = new Date();
-        bimeh.finished = true;
-        bimeh.signDate = date.toLocaleDateString('fa-ir');
-        await bimeh.save();     
-        request.btn = "";
-        await request.save();
-        this.requestChecker.currentState = new ShowConfirmState(this.requestChecker);
-        this.requestChecker.currentState.check(request);
-    }
-    else if(request.btn == 'CusShowInvoiceBtnClose') {
-        request.finished = true;
-        request.btn = "";
-        await request.save();
+        this.requestChecker.sendMessage(request.from, button);        
     }
 }
 

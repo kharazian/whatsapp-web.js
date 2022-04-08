@@ -19,7 +19,13 @@ GetRelMeliCodeState.prototype.check = async function(request) {
         this.requestChecker.currentState.check(request);
     }
     else {
-        if(request.btn == '') {
+        if(request.btn == 'CusShowInvoiceBtnRetuen' || request.body == '*9') {
+            request.relMeliCode = 0;
+            request.btn = "";
+            await request.save();
+            this.requestChecker.ShowBimehState.check(request);
+        }
+        else {
             if(isNaN(request.body)){
                 let btns = [];
                 btns.push({id: 'CusShowInvoiceBtnRetuen', body: msgString.CusShowInvoiceBtnRetuen});
@@ -28,7 +34,7 @@ GetRelMeliCodeState.prototype.check = async function(request) {
                     btns,
                     msgString.CusShowInvoiceBtnEditRel,
                     "---");
-                this.requestChecker.client.sendMessage(request.from, button);   
+                this.requestChecker.sendMessage(request.from, button);   
             }
             else {
                 let bimeh = await bimehModel.findOne({ meliCode: Number(request.meliCode)});
@@ -41,7 +47,7 @@ GetRelMeliCodeState.prototype.check = async function(request) {
                         btns,
                         msgString.CusShowInvoiceBtnEditRel,
                         "---");
-                    this.requestChecker.client.sendMessage(request.from, button);
+                    this.requestChecker.sendMessage(request.from, button);
                 }
                 else {
                     request.relMeliCode = Number(request.body);
@@ -50,12 +56,6 @@ GetRelMeliCodeState.prototype.check = async function(request) {
                     this.requestChecker.currentState.check(request);
                 }
             }   
-        }
-        else if(request.btn == 'CusShowInvoiceBtnRetuen') {
-            request.relMeliCode = 0;
-            request.btn = "";
-            await request.save();
-            this.requestChecker.ShowBimehState.check(request);
         }
     }
 }

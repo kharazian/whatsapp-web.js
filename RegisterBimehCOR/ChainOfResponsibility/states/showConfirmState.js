@@ -14,7 +14,25 @@ ShowConfirmState.prototype.constructor = ShowConfirmState;
 
 ShowConfirmState.prototype.check = async function(request) {
     let bimeh = await bimehModel.findOne({ meliCode: request.meliCode});
-    if(request.btn == '') {
+    if(request.btn == 'CusShowInvoiceBtnPrint' || request.body == '*5') {
+        try {
+            await makePdf(request.meliCode);
+            let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+request.meliCode+".pdf");
+            this.requestChecker.sendMessage(request.from, media);
+            request.finished = true;
+            request.btn = "";
+            await request.save();
+            
+        } catch (error) {
+            
+        }
+    }
+    else if(request.btn == 'CusShowInvoiceBtnClose' || request.body == '*3') {
+        request.finished = true;
+        request.btn = "";
+        await request.save();
+    }
+    else {
         let btns = [];
         btns.push({id: 'CusShowInvoiceBtnPrint', body: msgString.CusShowInvoiceBtnPrint});
         btns.push({id: 'CusShowInvoiceBtnClose', body: msgString.CusShowInvoiceBtnClose});
@@ -28,25 +46,7 @@ ShowConfirmState.prototype.check = async function(request) {
             btns,
             msgString.CusShowInvoiceTitle.format(bimeh.meliCode, bimeh.name, bimeh.family, msgString.EnableOrDisbale(bimeh.hasBimeh), bimeh.cost.numSeparator()),
             msgString.CusShowInvoiceFooter.format(bimeh.totalCost.numSeparator()));
-        this.requestChecker.client.sendMessage(request.from, button);       
-    }
-    else if(request.btn == 'CusShowInvoiceBtnPrint') {
-        try {
-            await makePdf(request.meliCode);
-            let media = MessageMedia.fromFilePath("./RegisterBimehCOR/data/"+request.meliCode+".pdf");
-            this.requestChecker.client.sendMessage(request.from, media);
-            request.finished = true;
-            request.btn = "";
-            await request.save();
-            
-        } catch (error) {
-            
-        }
-    }
-    else if(request.btn == 'CusShowInvoiceBtnClose') {
-        request.finished = true;
-        request.btn = "";
-        await request.save();
+        this.requestChecker.sendMessage(request.from, button);       
     }
 }
 

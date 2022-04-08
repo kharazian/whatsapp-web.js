@@ -13,23 +13,23 @@ if (fs.existsSync('./' + SESSION_FILE_PATH)) {
     sessionCfg = require('../' + SESSION_FILE_PATH);
 }
 
-const client = new Client({ puppeteer: { headless: false }, session: sessionCfg });
+const client = new Client({ puppeteer: { headless: false }}); //, session: sessionCfg });
 
   
-  client.on('authenticated', (session) => {
-    console.log('AUTHENTICATED', session);
-    sessionCfg=session;
-    fs.writeFile('./' +SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-        if (err) {
-          console.error(err);
-        }
-    });
-  });
+  // client.on('authenticated', (session) => {
+  //   console.log('AUTHENTICATED', session);
+  //   sessionCfg=session;
+  //   fs.writeFile('./' +SESSION_FILE_PATH, JSON.stringify(session), function (err) {
+  //       if (err) {
+  //         console.error(err);
+  //       }
+  //   });
+  // });
 
 client.on('message', async msg => {
   try {
     console.log('MESSAGE RECEIVED', msg);
-    // if (msg.body[0] === '*')
+    // if (msg.from === '989132147101@c.us')
     // {
         dispatchMsg(msg);
     // }    
@@ -40,7 +40,7 @@ client.on('message', async msg => {
 });
 
 async function startApp() {
-  const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
+  // const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
   // await makePdf(40076520);
   client.initialize().catch((err)=>{
