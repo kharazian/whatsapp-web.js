@@ -40,7 +40,7 @@ client.on('message', async msg => {
 });
 
 async function startApp() {
-  // const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
+  const mongooseConnection = await initDB(config.mongoUri, config.credentials.mongodb);
 
   // await makePdf(40076520);
   client.initialize().catch((err)=>{
