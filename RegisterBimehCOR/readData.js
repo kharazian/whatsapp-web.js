@@ -2,7 +2,6 @@ const fs = require('fs');
 const config = require('./config')
 const initDB = require('./database') 
 const bimehModel = require('./models/bimehModel') 
-const logger = require('./utils/logger')
 
 let dataArray = [];
 fs.readFile('./temp.csv', 'utf8', function (err, data) {
@@ -13,8 +12,8 @@ fs.readFile('./temp.csv', 'utf8', function (err, data) {
     dataArray = data.split(/\r?\n/);  //Be careful if you are in a \r\n world... 
     startApp()
         .catch((e) => {
-        logger.error("Server failed with error:");
-        logger.error(e);
+        console.error("Server failed with error:");
+        console.error(e);
         process.exitCode = 1;
         });  
 })
@@ -49,7 +48,7 @@ async function addBimeh(element) {
             relations  : []
         });
     }
-    if( element[28] != "خودشخص"){
+    if( element[28] != "خودشخص" && !bimeh.relations.find(obj => obj.meliCode == Number(element[25]) )){
         bimeh.relations.push({
             name:           element[21],                // String, 
             family:         element[22],                // String,
@@ -64,9 +63,6 @@ async function addBimeh(element) {
             hasBimeh:       element[30] == "TRUE" ? true : false,//  Boolean,
 
           });
-    }
-    else {
-        bimeh.cost = Number(element[29]);
     }
     await bimeh.save();
 }
