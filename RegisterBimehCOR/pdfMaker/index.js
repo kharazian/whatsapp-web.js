@@ -48,7 +48,7 @@ const makePdf = async function(melicode){
 
       pdfBank.find(obj => obj.id == "fullName" ).value = bimeh.name + " " + bimeh.family;
       pdfBank.find(obj => obj.id == "totalCostBank" ).value = (bimeh.totalCost + 600000).numSeparator();
-      pdfBank.find(obj => obj.id == "eachInstallments" ).value = Math.ceil((bimeh.totalCost + 600000)/11).numSeparator();
+      pdfBank.find(obj => obj.id == "eachInstallments" ).value = Math.ceil((bimeh.totalCost + 600000)/10).numSeparator();
 
       let pdfIndex = 1;
       for (let index = 0; index < bimeh.relations.length; index++) {

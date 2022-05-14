@@ -61,9 +61,9 @@ pdfModel.bimeh = [
 
 pdfModel.bank = [
     { id: "totalCostBank"   , value: "مبلغ کل"              , x: 190    , y: 78 },
-    { id: "installments"    , value: "یازده ماه"            , x: 143    , y: 78 },
+    { id: "installments"    , value: "ده ماه"               , x: 143    , y: 78 },
     { id: "eachInstallments", value: "قسط ماهیانه"          , x: 110    , y: 78 },
-    { id: "firstInstallment", value: "اردیبهشت ماه"         , x: 75     , y: 78 },
+    { id: "firstInstallment", value: "خرداد ماه"            , x: 75     , y: 78 },
     { id: "retCode"         , value: "شماره پرسنلی"         , x: 160    , y: 113},
     { id: "fullName"        , value: "نام و نام خانوادگی"   , x: 160    , y: 117},
     { id: "fatherName"      , value: "نام پدر"              , x: 110    , y: 117},

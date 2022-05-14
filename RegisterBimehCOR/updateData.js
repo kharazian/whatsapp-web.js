@@ -15,10 +15,20 @@ async function startApp() {
     bimehs = await bimehModel.find({ })
     // bimeh = await bimehModel.findOne({ meliCode: 40076520 })
     bimehs.forEach( async bimeh => {
-        if(bimeh && bimeh.relations.find(obj => obj.relation == "خود شخص" )){
-            bimeh.relations.remove(bimeh.relations.find(obj => obj.relation == "خود شخص" ));
-            await bimeh.save();
-        }
+        bimeh.cost = bimeh.hasBimeh ? (bimeh.workplaceCode == 1 ? 6000000 : 14400000) : 0;
+        let sumCost = bimeh.cost;
+        bimeh.relations.forEach(el => {
+            el.cost = el.hasBimeh ? 14400000 : 0;
+            sumCost = sumCost + el.cost;
+        });
+        bimeh.totalCost = sumCost;
+        await bimeh.save();
+
+        // if(bimeh && bimeh.relations.find(obj => obj.relation == "خود شخص" )){
+        //     bimeh.relations.remove(bimeh.relations.find(obj => obj.relation == "خود شخص" ));
+        //     await bimeh.save();
+        // }
         
     });
+    console.log("finished");
 }
